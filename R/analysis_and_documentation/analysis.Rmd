@@ -1,0 +1,319 @@
+---
+title: "Analysis"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(here)
+library(styler)
+library(tidyr)
+library(readxl)
+library(ggplot2)
+
+
+```
+
+```{r}
+
+here::here()
+
+clean_data <- read_csv(here("data-clean/clean_data.csv"))
+
+```
+
+
+
+# Analysis questions
+
+## 1. What is the total number of candy ratings given across the three years. 
+## (Number of candy ratings, not the number of raters. Don’t count missing values)
+
+
+```{r}
+
+# Define column names to exclude from the count
+cols_to_exclude <- c("how_old_are_you?", "trick_or_treat", "gender",
+                    "country")
+
+# Number of non-na ratings
+num_of_non_rating <- clean_data %>%
+  select(-one_of(cols_to_exclude)) %>%
+  summarise_all(~ sum(!is.na(.))) %>%
+  summarise(total_sum_ratings = sum(.))
+
+```
+## 2. What was the average age of people who are going out trick or treating?
+
+```{r}
+avg_age_that_who_going_out <- clean_data %>% 
+  select(`how_old_are_you?`, trick_or_treat) %>% 
+  filter(trick_or_treat == "yes") %>% 
+  summarise(avg_age = round(mean(`how_old_are_you?`, na.rm = TRUE),0))
+
+```
+## 3. What was the average age of people who are not going trick or treating?
+
+```{r}
+avg_age_people_not_going_out <- clean_data %>% 
+  select(`how_old_are_you?`, trick_or_treat) %>% 
+  filter(trick_or_treat == "no") %>% 
+  summarise(avg_age = round(mean(`how_old_are_you?`, na.rm = TRUE),0))
+```
+## 4. For each of joy, despair and meh, which candy bar received the most of these ratings?
+
+
+```{r}
+# Create a candy_bar vector 
+
+candy_bar_names <- c("butterfinger", "100_grand_bar", "any_full_sized_candy_bar", "snickers",
+               "hershey's_dark_chocolate", "heath_bar", "hershey's_milk_chocolate",
+               "kit_kat", "mars", "reggie_jackson_bar", "nestle_crunch", "milky_way",
+               "tolberone_something_or_other","three_musketeers", "peanut_butter_bars",
+               "twix", "mr._goodbar", "whatchamacallit_bars", "take_5")
+
+
+candy_bar_rating <- clean_data %>%
+  select(all_of(candy_bar_names)) %>%
+  pivot_longer(cols = candy_bar_names,
+         names_to = "candy_bar", values_to = "rating") %>%
+  group_by(candy_bar, rating) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(candy_bar) %>%
+  summarise(total_count = sum(count, na.rm = TRUE),
+            most_common_rating = if_else(all(is.na(count)), "People do not like this candy bar", 
+                                         rating[which.max(count)]),
+            most_common_rating_count = max(count, na.rm = TRUE)) %>%
+  filter(!is.na(most_common_rating))
+
+candy_bar_rating %>% 
+  arrange(desc(most_common_rating_count))
+
+```
+
+## 5. How many people rated Starburst as despair?
+
+```{r}
+
+starburst_rate <- clean_data %>% 
+  select(starburst) %>% 
+  filter(starburst == "DESPAIR") %>% 
+  count() %>% 
+  rename(total_despair_count = n)
+
+```
+## 6. What was the most popular candy bar by this rating system for each gender in the dataset?
+## Count despair as -1, joy as +1, and meh as 0.
+
+```{r}
+
+# Define function to convert rating 
+convert_rating <- function(rating) {
+  case_when(
+    rating == "DESPAIR" ~ -1,
+    rating == "JOY" ~ 1,
+    rating == "MEH" ~ 0
+  )
+}
+
+candy_bar_data <- clean_data %>%
+  select(candy_bar_names, gender)
+
+# Convert ratings to numeric values
+candy_data_numeric <- candy_bar_data %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+most_popular_candy <- candy_data_numeric %>%
+  group_by(gender) %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = -gender, names_to = "candy_bar", values_to = "total_rating") %>% 
+  filter(!is.na(gender) & total_rating != 0)
+
+most_popular_candy
+
+
+```
+
+## 7. What was the most popular candy bar in each year?
+```{r}
+candy_bar_data_by_year <- clean_data %>%
+  select(candy_bar_names, year)
+
+# Convert ratings to numeric values
+candy_data_num <- candy_bar_data_by_year %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+most_popular_candy_by_year <- candy_data_num %>%
+  group_by(year) %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>%
+  pivot_longer(cols = -year, names_to = "candy_bar", values_to = "total_rating") %>%
+  filter(!is.na(year)) %>% 
+  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  arrange(year, desc(total_rating)) %>% 
+  distinct(year, .keep_all = TRUE)
+
+most_popular_candy_by_year
+```
+
+## 8. What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
+```{r}
+
+candy_bar_data_by_country <- clean_data %>%
+  select(candy_bar_names, country)
+# Convert ratings to numeric values
+candy_data_country <- candy_bar_data_by_country %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+most_popular_candy_by_country <- candy_data_country %>%
+  group_by(country) %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>%
+  pivot_longer(cols = -country, names_to = "candy_bar", values_to = "total_rating") %>% 
+  filter(!is.na(country)) %>% 
+  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  arrange(desc(total_rating)) %>% 
+  distinct(country, .keep_all = TRUE) %>% 
+  filter(!is.na(country) & total_rating != 0) 
+  
+```
+
+## Visualizations
+
+## Top 3 most popular candies (per year / per gender / per country)
+
+
+```{r}
+
+top_three_candy_bar <- candy_data_num %>%
+  group_by(year) %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>%
+  pivot_longer(cols = -year, names_to = "candy_bar", values_to = "total_rating") %>%
+  filter(!is.na(year)) %>% 
+  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  arrange(year, desc(total_rating)) %>%
+  group_by(year) %>%
+  slice_max(order_by = total_rating, n = 3)
+
+
+
+ggplot(top_three_candy_bar, aes(x = candy_bar, total_rating, y = total_rating, fill = candy_bar)) +
+  geom_col(position = "dodge", width = 0.5) +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size = 11)) +
+  theme(axis.text.y = element_text(size = 11)) +
+  ggtitle("Top Three Candy Bars By Year") +
+  xlab("Candy Bar") +
+  ylab("Total Rating") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "right") +
+  scale_color_brewer(palette = "Spectral") +
+  scale_y_continuous(limits = c(0, max(top_three_candy_bar$total_rating) * 1.1)) +
+  facet_wrap(~year, scales = "free_x") +
+  theme(plot.title = element_text(margin = margin(b = 20), face = "bold")) +
+  theme(axis.title.x = element_text(margin = margin(t = 20))) +
+  theme(axis.title.y = element_text(margin = margin(r = 20))) +
+  theme(strip.text = element_text(size = 12, face = "bold")) + 
+  labs(fill = "Candy bar")
+
+
+
+
+```
+
+
+## Proportion of ratings (per year / per gender)
+
+```{r}
+
+rating_by_gender_year <- clean_data %>%
+  select(candy_bar_names, year, gender)
+
+# Convert ratings to numeric values
+rating_numeric <- rating_by_gender_year %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+rating_by_gender <- rating_numeric %>%
+  group_by(gender, year) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  pivot_longer(cols = c(-gender, -year), names_to = "candy_bar", values_to = "total_rating") %>% 
+  filter(!is.na(gender))
+
+ggplot(rating_by_gender, aes(x = gender, y = total_rating, fill = gender)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ year, nrow = 1) +
+  labs(x = "Gender", y = "Total Rating", fill = "Candy Bar", 
+       title = "Total Ratings by Gender for Each Year") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"), legend.position = "none") +
+  theme(axis.text.y = element_text(size = 11)) +
+  theme(axis.text.x = element_text(size = 11)) +
+  theme(strip.text = element_text(size = 12, face = "bold"))
+
+
+```
+## Missing values (per year / per gender / per country)
+
+```{r}
+
+# Missing data by year
+
+
+missing_data_by_year <- clean_data %>%
+  group_by(year) %>% 
+  summarise(across(everything(), ~sum(is.na(.)))) %>% 
+  mutate(total = rowSums(select(., -year))) %>% 
+  select(year, total) %>% 
+  ggplot(aes(x = year, y = total, fill = factor(year))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Missing Data by Year", x = "Year", y = "Total Missing Data", fill = "Year") +
+  scale_fill_brewer(palette = "Dark2")+
+  scale_y_continuous(labels = scales::comma_format(scale = 1)) 
+
+missing_data_by_year
+
+
+
+```
+
+```{r}
+# Missing data by Gender
+
+missing_data_by_gender <- clean_data %>%
+  group_by(gender) %>% 
+  summarise(across(everything(), ~sum(is.na(.)))) %>% 
+  mutate(total = rowSums(select(., -gender))) %>% 
+  select(gender, total) %>% 
+  filter(!is.na(gender)) %>% 
+  ggplot(aes(x = gender, y = total, fill = factor(gender))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Missing Data by Gender", x = "Year", y = "Total Missing Data", fill = "Gender") +
+  scale_fill_brewer(palette = "Set1")+
+  scale_y_continuous(labels = scales::comma_format(scale = 1)) 
+
+missing_data_by_gender
+
+```
+```{r}
+# Missing data by country 
+
+missing_data_by_country <- clean_data %>%
+  group_by(country) %>% 
+  summarise(across(everything(), ~sum(is.na(.)))) %>% 
+  mutate(total = rowSums(select(., -country))) %>% 
+  select(country, total) %>% 
+  filter(!is.na(country)) 
+
+
+
+missing_data_by_country %>%
+  mutate(country = fct_reorder(country, total)) %>%
+  ggplot(aes(x = total, y = country)) +
+  geom_col(fill = "steelblue") +
+  labs(title = "Missing Data by Country", x = "Total Missing Data", y = "Country") +
+  scale_fill_brewer(palette = "Paired") +
+  scale_x_continuous(labels = scales::comma_format(scale = 1))
+
+
+```
+ 
