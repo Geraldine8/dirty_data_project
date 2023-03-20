@@ -2,39 +2,41 @@
 title: "Dirty Data Project"
 author: "Geraldine A."
 output:
-  html_document:
-    theme: cerulean
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 ```
+
+
 
 # Introduction
 
-
+<div style="text-align: justify">
 The dataset used in this analysis was collected from surveys conducted between 2015 and 2017, which gathered responses from individuals across various countries including the UK, USA, Spain, the Netherlands, and other European and Asian countries. The surveys asked participants to rate their level of satisfaction (on a scale of Joy, Despair, or Meh) when receiving different types of candies and treats during Halloween.
 
 The purpose of this analysis is to identify patterns and insights within the dataset to better understand the preferences and satisfaction levels of individuals when it comes to Halloween candies and treats. By analyzing the data, we hope to gain a deeper understanding of the factors that influence people's satisfaction levels and how these factors differ across various countries and regions.
 
 In the following sections, we will explore the dataset and present our findings in a clear and concise manner.
 
+</div>
 
 ## Data 
 
+<div style="text-align: justify">
 For this analysis, I worked with three different data files that needed to be standardized, cleaned, and merged into a single file. The cleaning process involved removing any missing or incorrect data and handling inconsistencies in the formatting of the data.
 
 One of the biggest challenges I encountered during the cleaning process was the lack of validation in the "country" column of the survey data. Respondents were allowed to enter any value they wanted in this column, leading to a large number of invalid or nonsensical responses. To address this issue, I implemented a process to identify and correct any erroneous data in the "country" column.
 
 Despite these challenges, I was able to successfully prepare the data for analysis and extract valuable insights from it. The next sections will describe the analysis I performed on the data and the results I obtained.
+</div>
 
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
+## Analysis and visualisations
+### Top three the most popular candy bar by year 
 
 ```{r pressure, echo=FALSE}
 plot(pressure)
