@@ -181,7 +181,7 @@ most_popular_candy_by_country <- candy_data_country %>%
 
 ## Visualizations
 
-## Top 3 most popular candies (per year / per gender / per country)
+## Top 3 most popular candies (per year / per gender)
 
 
 ```{r}
@@ -198,7 +198,7 @@ top_three_candy_bar <- candy_data_num %>%
 
 
 
-ggplot(top_three_candy_bar, aes(x = candy_bar, total_rating, y = total_rating, fill = candy_bar)) +
+top_3_most_popular <- ggplot(top_three_candy_bar, aes(x = candy_bar, total_rating, y = total_rating, fill = candy_bar)) +
   geom_col(position = "dodge", width = 0.5) +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size = 11)) +
   theme(axis.text.y = element_text(size = 11)) +

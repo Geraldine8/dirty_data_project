@@ -5,14 +5,22 @@ output:
   prettydoc::html_pretty:
     theme: hpstr
     highlight: github
+
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
 ```
 
+```{r load-packages, include=FALSE}
 
+library(knitr)
+library(readr)
+library(here)
+library(tidyverse)
+library(kableExtra)
+
+```
 
 # Introduction
 
@@ -36,10 +44,72 @@ Despite these challenges, I was able to successfully prepare the data for analys
 </div>
 
 ## Analysis and visualisations
-### Top three the most popular candy bar by year 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+
+```{r echo=FALSE, include="FALSE"}
+clean_data <- read_csv(here("data-clean/clean_data.csv"))
+
 ```
+
+#### Total number of candy ratings given across the three years: 
+
+
+```{r, echo=FALSE}
+# Define column names to exclude from the count
+cols_to_exclude <- c("how_old_are_you?", "trick_or_treat", "gender",
+                    "country")
+
+# Number of non-na ratings
+num_of_non_rating <- clean_data %>%
+  select(-one_of(cols_to_exclude)) %>%
+  summarise_all(~ sum(!is.na(.))) %>%
+  summarise(total_sum_ratings = sum(.))
+
+kable(num_of_non_rating, format = "html", align = 'l') %>%
+  kable_styling(full_width = T, position = "left")
+
+
+
+```
+
+
+
+#### Average age of people who are going out trick or treating?
+
+```{r, echo=FALSE}
+
+avg_age_that_who_going_out <- clean_data %>% 
+  select(`how_old_are_you?`, trick_or_treat) %>% 
+  filter(trick_or_treat == "yes") %>% 
+  summarise(avg_age = round(mean(`how_old_are_you?`, na.rm = TRUE),0))
+
+kable(avg_age_that_who_going_out, format = "html", align = 'l') %>%
+  kable_styling(full_width = T, position = "left")
+```
+
+
+#### Top three the most popular candy bar by year 
+
+```{r missing_data_by_year, echo=FALSE}
+
+missing_data_by_year <- clean_data %>%
+  group_by(year) %>% 
+  summarise(across(everything(), ~sum(is.na(.)))) %>% 
+  mutate(total = rowSums(select(., -year))) %>% 
+  select(year, total) %>% 
+  ggplot(aes(x = year, y = total, fill = factor(year))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Missing Data by Year", x = "Year", y = "Total Missing Data", fill = "Year") +
+  scale_fill_brewer(palette = "Dark2")+
+  scale_y_continuous(labels = scales::comma_format(scale = 1)) 
+
+plot(missing_data_by_year)
+```
+
+
+
+
+
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -6,8 +6,7 @@ library(stringr)
 
 
 
-# combined_data <- read_csv("dirty_data_project_geraldine/R/task4/raw_data/combined_data.csv", locale=locale(encoding="latin1"))
-combined_data_v2 <- read_csv("dirty_data_project_geraldine/R/task4/raw_data/combined_data_v2", locale=locale(encoding="latin1"))
+combined_data_v2 <- read_csv("data-raw/combined_data_v2.csv", locale=locale(encoding="latin1"))
 
 view(combined_data_v2)
 names(combined_data_v2)
@@ -36,12 +35,12 @@ combined_data_v2 <- combined_data_v2 %>%
 
 # Standarise column - how old are you?
 combined_data_v2 <- combined_data_v2 %>%
-  mutate(`how_old_are_you?` = as.integer(`how_old_are_you?`)) %>% 
+  mutate(`how_old_are_you?` = as.integer(`how_old_are_you?`)) %>%
   filter(`how_old_are_you?` <= 100)
 
-combined_data_v2 <- combined_data_v2 %>% 
+combined_data_v2 <- combined_data_v2 %>%
   mutate(trick_or_treat = tolower(
-    trick_or_treat)) %>% 
+    trick_or_treat)) %>%
   mutate(trick_or_treat = ifelse(
     trick_or_treat != 'yes' & trick_or_treat != 'no', NA , trick_or_treat
   ))
@@ -50,37 +49,37 @@ combined_data_v2 <- combined_data_v2 %>%
 combined_data_v2$country <- str_to_lower(combined_data_v2$country)
 
 
-# Rename country column 
+# Rename country column
 clean_country <- function(data, wrong_countries, correct_country) {
   for (wrong_country in wrong_countries) {
     data["country"][data["country"] == wrong_country] <- correct_country
   }
-  
+
   return(data)
 }
 
-usa_country <- list("'merica",  "Alaska", "America", "California", "EUA",  
-                    "I pretend to be from Canada, but I am really from the United States.", 
-                    "Merica", "Murica", "N. America", "New Jersey", "New York", "North Carolina", 
+usa_country <- list("'merica",  "Alaska", "America", "California", "EUA",
+                    "I pretend to be from Canada, but I am really from the United States.",
+                    "Merica", "Murica", "N. America", "New Jersey", "New York", "North Carolina",
                     "Pittsburgh", "the best one - usa", "The United States", "The United States of America",
                     "The Yoo Ess of Aaayyyyyy", "Trumpistan", "U S", "u s a", "U.S.",
-                    "U.S.A.", "UD", "unhinged states", "Unied States", "unite states", 
-                    "United  States of America", "United Sates", "United staes", "United State", 
+                    "U.S.A.", "UD", "unhinged states", "Unied States", "unite states",
+                    "United  States of America", "United Sates", "United staes", "United State",
                     "United Statea", "United Stated", "united states", "United States of America",
-                    "United Statss", "United Stetes","United ststes",  "Unites States", 
-                    "Units States", "US", "US of A", "usa", "USA (I think but it's an election year so who can really tell)", 
-                    "USA USA USA", "USA USA USA USA", "USA USA USA!!!!", "USA!", "USA! USA!", "USA! USA! USA!", 
+                    "United Statss", "United Stetes","United ststes",  "Unites States",
+                    "Units States", "US", "US of A", "usa", "USA (I think but it's an election year so who can really tell)",
+                    "USA USA USA", "USA USA USA USA", "USA USA USA!!!!", "USA!", "USA! USA!", "USA! USA! USA!",
                     "USA!!!!!!", "USA? Hard to tell anymore..", "USAA", "usas", "USAUSAUSA", "USSA", "Us", "United States",
-                    "us", "United states", "united states of america", "USA", "uSA", "america", "u.s.", "u.s.a.", "united states", 
+                    "us", "United states", "united states of america", "USA", "uSA", "america", "u.s.", "u.s.a.", "united states",
                     "united ststes"
                     )
 
 usa_country <- lapply(usa_country, tolower)
 
-na_country <- list("1", "30.0", "32", "35", "44.0","45", "45.0", "46", "47.0", "51.0", "54.0","A", 
+na_country <- list("1", "30.0", "32", "35", "44.0","45", "45.0", "46", "47.0", "51.0", "54.0","A",
                    "A tropical island south of the equator", "Ahem....Amerca", "Atlantis", "Cascadia",
                    "Denial", "Earth", "Europe", "I don't know anymore","Fear and Loathing", "god's country",
-                   "insanity lately", "Narnia", "Neverland", "Not the USA or Canada", "one of the best ones", "See above", 
+                   "insanity lately", "Narnia", "Neverland", "Not the USA or Canada", "one of the best ones", "See above",
                    "Somewhere", "soviet canuckistan", "Sub-Canadian North America... 'Merica", "The republic of Cascadia",
                    "there isn't one for old men", "this one", "subscribe to dm4uz3 on youtube", "murrika")
 na_country <- lapply(na_country, tolower)
@@ -109,16 +108,16 @@ combined_data_v2 = clean_country(combined_data_v2, ca_country, "Canada")
 combined_data_v2 = clean_country(combined_data_v2, es_country, "Spain")
 combined_data_v2 = clean_country(combined_data_v2, br_country, "Brazil")
 
-view(combined_data_v2)
 
 distinct(combined_data_v2, country)
 
-# Capitalise country names 
+# Capitalise country names
 combined_data_v2$country <- str_to_upper(combined_data_v2$country)
+
 view(combined_data_v2)
 names(combined_data_v2)
 
 
-# write.csv(combined_data, file = 'clean_data.csv', row.names = FALSE)
-# write.xlsx(combined_data_v2, "clean_data_v2.xlsx") 
-write.csv(combined_data_v2, file = 'clean_data_v4.csv', row.names = FALSE)
+write.csv(combined_data_v2, file = "data-clean/clean_data.csv", row.names = FALSE)
+
+
