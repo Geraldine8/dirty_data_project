@@ -147,7 +147,7 @@ HTML(html_table)
 ```
 
 
-#### People rated Starburst as despair?
+#### People rated Starburst as despair
 
 ```{r, echo=FALSE}
 
@@ -218,7 +218,7 @@ most_popular_candy_by_year <- candy_data_num %>%
   summarise(across(everything(), ~ sum(., na.rm = TRUE))) %>%
   pivot_longer(cols = -year, names_to = "candy_bar", values_to = "total_rating") %>%
   filter(!is.na(year)) %>% 
-  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  # filter(candy_bar != "any_full_sized_candy_bar") %>%
   arrange(year, desc(total_rating)) %>% 
   distinct(year, .keep_all = TRUE)
 
@@ -231,7 +231,6 @@ kable(most_popular_candy_by_year, format = "html", align = 'l')
 #### The highest-rated candy bar among people in the US, Canada, UK, and other countries (excluding values with missing data):
 
 ```{r, echo=FALSE}
-
 candy_bar_data_by_country <- clean_data %>%
   select(all_of(candy_bar_names), country)
 
@@ -245,7 +244,7 @@ most_popular_candy_by_country <- candy_data_country %>%
   summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
   pivot_longer(cols = -country, names_to = "candy_bar", values_to = "total_rating") %>% 
   filter(!is.na(country)) %>% 
-  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  # filter(candy_bar != "any_full_sized_candy_bar") %>%
   arrange(desc(total_rating)) %>% 
   distinct(country, .keep_all = TRUE) %>% 
   filter(!is.na(country) & total_rating != 0) 
@@ -266,44 +265,86 @@ HTML(html_table)
 
 
 
+#### Top 3 most popular candies (per year / per gender)
+
+
+```{r, echo=FALSE}
+
+top_3_most_popular <- candy_data_num %>%
+  group_by(year) %>%
+  summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
+  pivot_longer(cols = -year, names_to = "candy_bar", values_to = "total_rating") %>%
+  filter(!is.na(year)) %>% 
+  # filter(candy_bar != "any_full_sized_candy_bar") %>%
+  arrange(year, desc(total_rating)) %>%
+  group_by(year) %>%
+  slice_max(order_by = total_rating, n = 3)
 
 
 
+top_3_most_popular <- ggplot(top_3_most_popular, aes(x = candy_bar, total_rating, y = total_rating, fill = candy_bar)) +
+  geom_col(position = "dodge", width = 0.7) +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.6, size = 10)) +
+  theme(axis.text.y = element_text(size = 10)) +
+  ggtitle("Top Three Candy Bars By Year") +
+  xlab(NULL) +
+  ylab("Total Rating") +
+  theme(plot.title = element_text(hjust = 0.6)) +
+  theme(legend.position = "right") +
+  scale_color_brewer(palette = "Spectral") +
+  scale_y_continuous(limits = c(0, max(top_3_most_popular$total_rating) * 1.1)) +
+  facet_wrap(~year, scales = "free_x") +
+  theme(plot.title = element_text(margin = margin(b = 20), face = "bold")) +
+  theme(axis.title.x = element_text(margin = margin(t = 20))) +
+  theme(axis.title.y = element_text(margin = margin(r = 20))) +
+  theme(strip.text = element_text(size = 12, face = "bold")) +
+  labs(fill = "Candy bar") +
+  theme(axis.line.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
+plot(top_3_most_popular)
+
+```
 
 
 
+### Ratings (per year / per gender)
+
+```{r, echo=FALSE}
+
+rating_by_gender_year <- clean_data %>%
+  select(all_of(candy_bar_names), year, gender)
+
+# Convert ratings to numeric values
+rating_numeric <- rating_by_gender_year %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+rating_by_gender <- rating_numeric %>%
+  group_by(gender, year) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  pivot_longer(cols = c(-gender, -year), names_to = "candy_bar", values_to = "total_rating") %>% 
+  filter(!is.na(gender))
+
+rating_by_gender <- ggplot(rating_by_gender, aes(x = gender, y = total_rating, fill = gender)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ year, nrow = 1) +
+  labs(x = "Gender", y = "Total Rating", fill = "Candy Bar", 
+       title = "Total Ratings by Gender for Each Year") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"), legend.position = "none") +
+  theme(axis.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(size = 9)) +
+  theme(strip.text = element_text(size = 12, face = "bold"))
+plot(rating_by_gender)
+
+```
 
 
 
+#### Missing values (per year / per gender / per country)
 
+```{r, echo=FALSE}
 
+# Missing data by year
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Top three the most popular candy bar by year 
-
-```{r missing_data_by_year, echo=FALSE}
 
 missing_data_by_year <- clean_data %>%
   group_by(year) %>% 
@@ -316,11 +357,51 @@ missing_data_by_year <- clean_data %>%
   scale_fill_brewer(palette = "Dark2")+
   scale_y_continuous(labels = scales::comma_format(scale = 1)) 
 
-plot(missing_data_by_year)
+missing_data_by_year
 ```
 
 
 
+#### Missing data by Gender
+```{r, echo=FALSE}
+missing_data_by_gender <- clean_data %>%
+  group_by(gender) %>% 
+  summarise(across(everything(), ~sum(is.na(.)))) %>% 
+  mutate(total = rowSums(select(., -gender))) %>% 
+  select(gender, total) %>% 
+  filter(!is.na(gender)) %>% 
+  ggplot(aes(x = gender, y = total, fill = factor(gender))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Missing Data by Gender", x = "Year", y = "Total Missing Data", fill = "Gender") +
+  scale_fill_brewer(palette = "Set1")+
+  scale_y_continuous(labels = scales::comma_format(scale = 1)) 
+
+plot(missing_data_by_gender)
+
+```
+
+
+
+### Missing data by country:
+```{r, echo=FALSE}
+missing_data_by_country <- clean_data %>%
+  group_by(country) %>% 
+  summarise(across(everything(), ~sum(is.na(.)))) %>% 
+  mutate(total = rowSums(select(., -country))) %>% 
+  select(country, total) %>% 
+  filter(!is.na(country)) 
+
+missing_data_by_country %>%
+  mutate(country = fct_reorder(country, total)) %>%
+  ggplot(aes(x = total, y = country)) +
+  geom_col(fill = "steelblue") +
+  labs(title = "Missing Data by Country", x = "Total Missing Data", y = "Country") +
+  scale_fill_brewer(palette = "Paired") +
+  scale_x_continuous(labels = scales::comma_format(scale = 1)) +
+  coord_cartesian(xlim = c(0, max(missing_data_by_country$total, na.rm = TRUE) * 1.1))
+
+
+```
 
 
 
