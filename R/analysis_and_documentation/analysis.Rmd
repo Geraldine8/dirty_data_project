@@ -10,6 +10,7 @@ library(styler)
 library(tidyr)
 library(readxl)
 library(ggplot2)
+library(forcats)
 
 
 ```
@@ -313,7 +314,6 @@ missing_data_by_country %>%
   labs(title = "Missing Data by Country", x = "Total Missing Data", y = "Country") +
   scale_fill_brewer(palette = "Paired") +
   scale_x_continuous(labels = scales::comma_format(scale = 1))
-
 
 ```
  

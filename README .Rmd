@@ -19,6 +19,7 @@ library(readr)
 library(here)
 library(tidyverse)
 library(kableExtra)
+library(htmltools)
 
 ```
 
@@ -85,8 +86,219 @@ avg_age_that_who_going_out <- clean_data %>%
   summarise(avg_age = round(mean(`how_old_are_you?`, na.rm = TRUE),0))
 
 kable(avg_age_that_who_going_out, format = "html", align = 'l') %>%
-  kable_styling(full_width = T, position = "left")
+  kable_styling(full_width = T) 
+
 ```
+
+
+
+####  Average age of people who are not going trick or treating?
+
+```{r, echo=FALSE}
+avg_age_people_not_going_out <- clean_data %>% 
+  select(`how_old_are_you?`, trick_or_treat) %>% 
+  filter(trick_or_treat == "no") %>% 
+  summarise(avg_age = round(mean(`how_old_are_you?`, na.rm = TRUE),0))
+
+kable(avg_age_people_not_going_out, format = "html", align = 'l') %>%
+  kable_styling(full_width = T, position = "left")
+
+```
+
+
+
+#### For each of joy, despair and meh, Which candy bar received the most of these ratings?
+
+```{r, echo=FALSE}
+
+# Create a candy_bar vector 
+
+candy_bar_names <- c("butterfinger", "100_grand_bar", "any_full_sized_candy_bar", "snickers",
+               "hershey's_dark_chocolate", "heath_bar", "hershey's_milk_chocolate",
+               "kit_kat", "mars", "reggie_jackson_bar", "nestle_crunch", "milky_way",
+               "tolberone_something_or_other","three_musketeers", "peanut_butter_bars",
+               "twix", "mr._goodbar", "whatchamacallit_bars", "take_5")
+
+
+candy_bar_rating <- clean_data %>%
+  select(all_of(candy_bar_names)) %>%
+  pivot_longer(cols = all_of(candy_bar_names),
+         names_to = "candy_bar", values_to = "rating") %>%
+  group_by(candy_bar, rating) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(candy_bar) %>%
+  summarise(top_rating = if_else(all(is.na(count)), "People do not like this candy bar", 
+                                         rating[which.max(count)]),
+            rating_count = max(count, na.rm = TRUE)) %>%
+  filter(!is.na(top_rating)) %>%
+  arrange(desc(rating_count))
+
+
+
+# set the height of the div
+div_height <- "400px"
+
+# add a scrollbar to the table
+html_table <- paste0('<div style="height:', div_height, '; overflow-y: auto">', kable(candy_bar_rating[, -2], format = "html", align = 'l'), '</div>')
+
+# display the table
+HTML(html_table)
+
+```
+
+
+#### People rated Starburst as despair?
+
+```{r, echo=FALSE}
+
+starburst_rate <- clean_data %>% 
+  select(starburst) %>% 
+  filter(starburst == "DESPAIR") %>% 
+  count() %>% 
+  rename(total_despair_count = n)
+
+kable(starburst_rate, format = "html", align = 'l')
+
+
+```
+
+#### The most popular candy bar for each gender in the dataset
+
+```{r, echo=FALSE}
+
+# Define function to convert rating 
+convert_rating <- function(rating) {
+  case_when(
+    rating == "DESPAIR" ~ -1,
+    rating == "JOY" ~ 1,
+    rating == "MEH" ~ 0
+  )
+}
+
+candy_bar_data <- clean_data %>%
+  select(all_of(candy_bar_names), gender)
+
+# Convert ratings to numeric values
+candy_data_numeric <- candy_bar_data %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+most_popular_candy <- candy_data_numeric %>%
+  group_by(gender) %>%
+  summarise(across(everything(), ~sum(., na.rm = TRUE))) %>% 
+  pivot_longer(cols = -gender, names_to = "candy_bar", values_to = "total_rating") %>% 
+  filter(!is.na(gender) & total_rating != 0)
+
+
+# set the height of the div
+div_height <- "400px"
+
+# add a scrollbar to the table
+html_table <- paste0('<div style="height:', div_height, '; overflow-y: auto">', kable(most_popular_candy, format = "html", align = 'l'), '</div>')
+
+# display the table
+HTML(html_table)
+
+
+```
+
+
+#### The most popular candy bar in each year:
+```{r, echo=FALSE}
+candy_bar_data_by_year <- clean_data %>%
+  select(all_of(candy_bar_names), year)
+
+# Convert ratings to numeric values
+candy_data_num <- candy_bar_data_by_year %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+most_popular_candy_by_year <- candy_data_num %>%
+  group_by(year) %>%
+  summarise(across(everything(), ~ sum(., na.rm = TRUE))) %>%
+  pivot_longer(cols = -year, names_to = "candy_bar", values_to = "total_rating") %>%
+  filter(!is.na(year)) %>% 
+  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  arrange(year, desc(total_rating)) %>% 
+  distinct(year, .keep_all = TRUE)
+
+
+kable(most_popular_candy_by_year, format = "html", align = 'l')
+```
+
+
+
+#### The highest-rated candy bar among people in the US, Canada, UK, and other countries (excluding values with missing data):
+
+```{r, echo=FALSE}
+
+candy_bar_data_by_country <- clean_data %>%
+  select(all_of(candy_bar_names), country)
+
+# Convert ratings to numeric values
+candy_data_country <- candy_bar_data_by_country %>%
+  mutate_at(candy_bar_names, convert_rating)
+
+
+most_popular_candy_by_country <- candy_data_country %>%
+  group_by(country) %>%
+  summarise(across(everything(), ~sum(., na.rm = TRUE))) %>%
+  pivot_longer(cols = -country, names_to = "candy_bar", values_to = "total_rating") %>% 
+  filter(!is.na(country)) %>% 
+  filter(candy_bar != "any_full_sized_candy_bar") %>%
+  arrange(desc(total_rating)) %>% 
+  distinct(country, .keep_all = TRUE) %>% 
+  filter(!is.na(country) & total_rating != 0) 
+
+
+# set the height of the div
+div_height <- "400px"
+
+# add a scrollbar to the table
+html_table <- paste0('<div style="height:', div_height, '; overflow-y: auto">', kable(most_popular_candy_by_country, format = "html", align = 'l'), '</div>')
+
+# display the table
+HTML(html_table)
+
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #### Top three the most popular candy bar by year 
