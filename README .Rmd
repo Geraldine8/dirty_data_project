@@ -419,5 +419,9 @@ It is worth noting that there were many missing data points in the dataset, with
 <div>
 
 
+# Reference
+
+[Candy dataset/surveys](https://www.scq.ubc.ca/so-much-candy-data-seriously/)
+
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
