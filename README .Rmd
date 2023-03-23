@@ -403,6 +403,21 @@ missing_data_by_country %>%
 
 ```
 
+# Conclusion
+<div style="text-align: justify">
+After analyzing the candy surveys dataset, we can conclude that the average age of people who go out for trick or treating is 35, while the average age of people who do not go out is 39.
+
+The dataset also showed that people rated the candy bars based on three categories - joy, despair, and meh. Based on this rating system, the most enjoyed candy bar was any full-sized candy bar (7246 ratings), followed by Kit Kat (6912 ratings), and Twix (6684 ratings).
+
+Furthermore, we discovered that the most popular candy bars for each gender were slightly different. Females preferred any full-sized candy bar (855 ratings), Butterfinger, and 100 Grand Bar, while males preferred the same candy bars but with a higher rating for any full-sized candy bar (1533 ratings).
+
+In terms of yearly popularity, any full-sized candy bar was the most popular candy bar for 2015, 2016, and 2017, with 4392, 982, and 1497 ratings respectively.
+
+Finally, we found that the highest-rated candy bar by country was any full-sized candy bar, which was the top-rated candy bar for the USA, Canada, the UK, and Germany.
+
+It is worth noting that there were many missing data points in the dataset, with the majority of them coming from the USA (101834 NAs), followed by Canada (13179 NAs) and the UK (3100 NAs). Overall, this analysis provides valuable insights into candy preferences and trick-or-treating habits among different demographics.
+<div>
+
 
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
