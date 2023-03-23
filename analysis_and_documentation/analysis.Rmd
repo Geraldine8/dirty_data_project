@@ -276,9 +276,9 @@ missing_data_by_year
 
 
 ```
-
+## Missing data by Gender
 ```{r}
-# Missing data by Gender
+
 
 missing_data_by_gender <- clean_data %>%
   group_by(gender) %>% 
@@ -295,6 +295,8 @@ missing_data_by_gender <- clean_data %>%
 missing_data_by_gender
 
 ```
+
+
 ```{r}
 # Missing data by country 
 
