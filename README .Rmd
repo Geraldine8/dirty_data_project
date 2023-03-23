@@ -1,6 +1,7 @@
 ---
 title: "Dirty Data Project"
 author: "Geraldine A."
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   prettydoc::html_pretty:
     theme: hpstr
